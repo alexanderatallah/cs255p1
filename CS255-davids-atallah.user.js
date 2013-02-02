@@ -37,6 +37,10 @@ var keys = {}; // association map of keys: group -> key
 // @param {String} group Group name.
 // @return {String} Encryption of the plaintext, encoded as a string.
 function Encrypt(plainText, group) {
+  encrypt(plainText, keys[group]);
+}
+
+function encrypt(plainText, key) {
   // CS255-todo: encrypt the plainText, using key for the group.
   if ((plainText.indexOf('rot13:') == 0) || (plainText.length < 1)) {
     // already done, or blank
@@ -46,7 +50,6 @@ function Encrypt(plainText, group) {
     // encrypt, add tag.
     return 'rot13:' + rot13(plainText);
   }
-
 }
 
 // Return the decryption of the message for the given group, in the form of a string.
@@ -56,7 +59,10 @@ function Encrypt(plainText, group) {
 // @param {String} group Group name.
 // @return {String} Decryption of the ciphertext.
 function Decrypt(cipherText, group) {
+  decrypt(cipherText, keys[group]);
+}
 
+function decrypt(cipherText, key) {
   // CS255-todo: implement decryption on encrypted messages
 
   if (cipherText.indexOf('rot13:') == 0) {
@@ -87,40 +93,37 @@ function GenerateKey(group) {
 function SaveKeys() {
   
   var key_str = JSON.stringify(keys);
-  var userkey = sessionStorage['facebook-master-key-' + my_username];
+  var userkey = JSON.parse(sessionStorage['facebook-master-key-' + my_username]);
   assert(userkey);
-  var cipher = new sjcl.cipher.aes(userkey);
-  enc_keys = cipher.encrypt(key_str);
-  cs255.localStorage.setItem('facebook-keys-' + my_username, enc_keys);
+  var enc_keys = encrypt(key_str, userkey);
+  cs255.localStorage.setItem('facebook-keys-' + my_username, JSON.stringify(enc_keys));
 
 }
 
 // Load the group keys from disk.
 function LoadKeys() {
   keys = {}; // Reset the keys.
-  var saved = cs255.localStorage.getItem('facebook-keys-' + my_username);
+  var saved = JSON.parse(cs255.localStorage.getItem('facebook-keys-' + my_username));
   if (saved) {
     // We have a database; get the user's hashed password
-    var userkey = sessionStorage['facebook-master-key-' + my_username];
+    var userkey = JSON.parse(sessionStorage['facebook-master-key-' + my_username]);
     if (!userkey) {
       var password = prompt("Enter your password:");
       assert(password);
-      var salt = cs255.localStorage['facebook-salt-' + my_username];
+      var salt = JSON.parse(cs255.localStorage['fb-salt-' + my_username]);
       userkey = sjcl.misc.pbkdf2(password, salt, null, 128, null);
     }
-    var cipher = new sjcl.cipher.aes(userkey);
-    key_str = cipher.decrypt(saved);
-    assert(key_str.substr(0, 2) == "{\""); // Make sure it successfully decrypts
+    var key_str = decrypt(saved, userkey);
+    assert(key_str.substr(0, 2) == "{\"" || key_str == "{}"); // Make sure it successfully decrypts
     keys = JSON.parse(key_str);
-
   } else {
     // It's a new database; create a password and save the salt
     var password = prompt("Create a password for your Facebook encryption:");
     assert(password);
     var salt = GetRandomValues(4);
     var userkey = sjcl.misc.pbkdf2(password, salt, null, 128, null);
-    sessionStorage.setItem('facebook-master-key-' + my_username, userkey);
-    cs255.localStorage.setItem('facebook-salt-' + my_username, salt);
+    sessionStorage.setItem('facebook-master-key-' + my_username, JSON.stringify(userkey));
+    cs255.localStorage.setItem('fb-salt-' + my_username, JSON.stringify(salt));
     SaveKeys();
   }
 }
