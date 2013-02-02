@@ -1,7 +1,7 @@
 // ==UserScript==
-// @namespace      CS255-Atallah-Davids
-// @name           CS255-Atallah-Davids
-// @description    CS255-Atallah-Davids - CS255 Assignment 1
+// @namespace      CS255-davids-atallah
+// @name           CS255-davids-atallah
+// @description    CS255-davids-atallah - CS255 Assignment 1
 // @version        1.5
 //
 // 
