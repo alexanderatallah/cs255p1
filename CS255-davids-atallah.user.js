@@ -78,7 +78,7 @@ function GenerateKey(group) {
   // CS255-todo: Well this needs some work...
   // var key = 'CS255-todo';
   
-  var key = GetRandomValues(4);
+  var key = GetRandomValues(4); // assuming that key length is 128 bits
 
   keys[group] = key;
   SaveKeys();
