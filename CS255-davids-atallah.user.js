@@ -75,7 +75,6 @@ function Decrypt(cipherText, group) {
 // @param {String} group Group name.
 function GenerateKey(group) {
 
-  // CS255-todo: Well this needs some work...
   // var key = 'CS255-todo';
   
   var key = GetRandomValues(4); // assuming that key length is 128 bits
@@ -88,12 +87,12 @@ function GenerateKey(group) {
 function SaveKeys() {
   
   var key_str = JSON.stringify(keys);
-  var userkey = window.sessionStorage['facebook-master-key'];
+  var userkey = window.sessionStorage['facebook-master-key-' + my_username];
   assert(userkey);
   var cipher = new sjcl.cipher.aes(userkey);
   enc_keys = cipher.encrypt(key_str);
   cs255.localStorage.setItem('facebook-keys-' + my_username, enc_keys);
-  
+
 }
 
 // Load the group keys from disk.
@@ -102,11 +101,12 @@ function LoadKeys() {
   var saved = cs255.localStorage.getItem('facebook-keys-' + my_username);
   if (saved) {
     // We have a database; get the user's hashed password
-    var userkey = window.sessionStorage['facebook-master-key'];
+    var userkey = window.sessionStorage['facebook-master-key-' + my_username];
     if (!userkey) {
       var password = prompt("Enter your password:");
+      assert(password);
       var salt = cs255.localStorage.salt;
-      userkey = sjcl.misc.pbkdf2(password, salt);
+      userkey = sjcl.misc.pbkdf2(password, salt, null, 128, null);
     }
     var cipher = new sjcl.cipher.aes(userkey);
     keys = JSON.parse(cipher.decrypt(saved));
@@ -114,10 +114,11 @@ function LoadKeys() {
   } else {
     // It's a new database; create a password and save the salt
     var password = prompt("Create a password for your Facebook encryption:");
+    assert(password);
     var salt = GetRandomValues(4);
-    var userkey = sjcl.misc.pbkdf2(password, salt);
-    window.sessionStorage.setItem('facebook-master-key', userkey);
-    cs255.localStorage.setItem('facebook-salt', salt);
+    var userkey = sjcl.misc.pbkdf2(password, salt, null, 128, null);
+    window.sessionStorage.setItem('facebook-master-key-' + my_username, userkey);
+    cs255.localStorage.setItem('facebook-salt-' + my_username, salt);
   }
 }
 
