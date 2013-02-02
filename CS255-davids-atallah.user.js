@@ -87,7 +87,7 @@ function GenerateKey(group) {
 function SaveKeys() {
   
   var key_str = JSON.stringify(keys);
-  var userkey = window.sessionStorage['facebook-master-key-' + my_username];
+  var userkey = sessionStorage['facebook-master-key-' + my_username];
   assert(userkey);
   var cipher = new sjcl.cipher.aes(userkey);
   enc_keys = cipher.encrypt(key_str);
@@ -101,15 +101,17 @@ function LoadKeys() {
   var saved = cs255.localStorage.getItem('facebook-keys-' + my_username);
   if (saved) {
     // We have a database; get the user's hashed password
-    var userkey = window.sessionStorage['facebook-master-key-' + my_username];
+    var userkey = sessionStorage['facebook-master-key-' + my_username];
     if (!userkey) {
       var password = prompt("Enter your password:");
       assert(password);
-      var salt = cs255.localStorage.salt;
+      var salt = cs255.localStorage['facebook-salt-' + my_username];
       userkey = sjcl.misc.pbkdf2(password, salt, null, 128, null);
     }
     var cipher = new sjcl.cipher.aes(userkey);
-    keys = JSON.parse(cipher.decrypt(saved));
+    key_str = cipher.decrypt(saved);
+    assert(key_str.substr(0, 2) == "{\""); // Make sure it successfully decrypts
+    keys = JSON.parse(key_str);
 
   } else {
     // It's a new database; create a password and save the salt
@@ -117,8 +119,9 @@ function LoadKeys() {
     assert(password);
     var salt = GetRandomValues(4);
     var userkey = sjcl.misc.pbkdf2(password, salt, null, 128, null);
-    window.sessionStorage.setItem('facebook-master-key-' + my_username, userkey);
+    sessionStorage.setItem('facebook-master-key-' + my_username, userkey);
     cs255.localStorage.setItem('facebook-salt-' + my_username, salt);
+    SaveKeys();
   }
 }
 
