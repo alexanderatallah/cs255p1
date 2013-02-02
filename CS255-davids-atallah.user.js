@@ -87,10 +87,13 @@ function GenerateKey(group) {
 // Take the current group keys, and save them to disk.
 function SaveKeys() {
   
-  // CS255-todo: plaintext keys going to disk?
   var key_str = JSON.stringify(keys);
-
-  cs255.localStorage.setItem('facebook-keys-' + my_username, key_str);
+  var userkey = window.sessionStorage['facebook-master-key'];
+  assert(userkey);
+  var cipher = new sjcl.cipher.aes(userkey);
+  enc_keys = cipher.encrypt(key_str);
+  cs255.localStorage.setItem('facebook-keys-' + my_username, enc_keys);
+  
 }
 
 // Load the group keys from disk.
@@ -98,8 +101,23 @@ function LoadKeys() {
   keys = {}; // Reset the keys.
   var saved = cs255.localStorage.getItem('facebook-keys-' + my_username);
   if (saved) {
-    // CS255-todo: plaintext keys were on disk?
-    keys = JSON.parse(saved);
+    // We have a database; get the user's hashed password
+    var userkey = window.sessionStorage['facebook-master-key'];
+    if (!userkey) {
+      var password = prompt("Enter your password:");
+      var salt = cs255.localStorage.salt;
+      userkey = sjcl.misc.pbkdf2(password, salt);
+    }
+    var cipher = new sjcl.cipher.aes(userkey);
+    keys = JSON.parse(cipher.decrypt(saved));
+
+  } else {
+    // It's a new database; create a password and save the salt
+    var password = prompt("Create a password for your Facebook encryption:");
+    var salt = GetRandomValues(4);
+    var userkey = sjcl.misc.pbkdf2(password, salt);
+    window.sessionStorage.setItem('facebook-master-key', userkey);
+    cs255.localStorage.setItem('facebook-salt', salt);
   }
 }
 
