@@ -100,6 +100,14 @@ function decrypt(cipherText, key) {
   return m.join("");
 }
 
+function chunk(text) {
+  var t = new Array(text.length / 4 + 1);
+  for (var i = 0; i < text.length; i += 4) {
+    t[i] = text.substring(i, i+4).split("");
+  }
+  return t;
+}
+
 // Generate a new key for the given group.
 //
 // @param {String} group Group name.
