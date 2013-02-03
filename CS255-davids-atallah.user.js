@@ -42,14 +42,28 @@ function Encrypt(plainText, group) {
 
 function encrypt(plainText, key) {
   // CS255-todo: encrypt the plainText, using key for the group.
-  if ((plainText.indexOf('rot13:') == 0) || (plainText.length < 1)) {
-    // already done, or blank
-    alert("Try entering a message (the button works only once)");
-    return plainText;
-  } else {
-    // encrypt, add tag.
-    return 'rot13:' + rot13(plainText);
+  // if ((plainText.indexOf('rot13:') == 0) || (plainText.length < 1)) {
+  //   // already done, or blank
+  //   alert("Try entering a message (the button works only once)");
+  //   return plainText;
+  // } else {
+  //   // encrypt, add tag.
+  //   return 'rot13:' + rot13(plainText);
+  // }
+
+  var cipher = new sjcl.cipher.aes(key);
+  var IV = GetRandomValues(2);
+  // Need to implement chunk
+  var m = chunk(plainText);
+  var c = new Array(m.length);
+  var x = m[0] ^ IV;
+  c[0] = cipher.encrypt(x);
+  for (var i = 1; i < m.length; i++) {
+    x = m[i] ^ c[i-1];
+    c[i] = cipher.encrypt(x);
   }
+  c.push(IV);
+  return c.join("");
 }
 
 // Return the decryption of the message for the given group, in the form of a string.
@@ -65,15 +79,25 @@ function Decrypt(cipherText, group) {
 function decrypt(cipherText, key) {
   // CS255-todo: implement decryption on encrypted messages
 
-  if (cipherText.indexOf('rot13:') == 0) {
+  // if (cipherText.indexOf('rot13:') == 0) {
 
-    // decrypt, ignore the tag.
-    var decryptedMsg = rot13(cipherText.slice(6));
-    return decryptedMsg;
+  //   // decrypt, ignore the tag.
+  //   var decryptedMsg = rot13(cipherText.slice(6));
+  //   return decryptedMsg;
 
-  } else {
-    throw "not encrypted";
+  // } else {
+  //   throw "not encrypted";
+  // }
+  var cipher = new sjcl.cipher.aes(key);
+  // Need to implement chunk, possibly modify for decrypt
+  var c = chunk(cipherText);
+  var IV = c.pop();
+  var m = new Array(c.length);
+  m[0] = cipher.decrypt(c[0]) ^ IV;
+  for (var i = 1; i < m.length; i++) {
+    m[i] = cipher.decrypt(c[i]) ^ c[i-1];
   }
+  return m.join("");
 }
 
 // Generate a new key for the given group.
@@ -125,7 +149,7 @@ function LoadKeys() {
         saveKey(userkey);
       }
     }
-    
+
     keys = JSON.parse(key_str);
 
   } else {
