@@ -56,13 +56,14 @@ function encrypt(plainText, key) {
   // }
 
   // pad plaintext
-  /*var pad = Math.floor(plainText.length / 16 + 1) * 16 - plainText.length;
+  var pad = Math.floor(plainText.length / 16 + 1) * 16 - plainText.length;
   for (var i = 0; i < pad; i++) {
     plainText = plainText + String.fromCharCode(pad);
-  }*/
-
+  }
+  
+  debugger;
   plainText = sjcl.codec.utf8String.toBits(plainText);
-  var cipher = new sjcl.cipher.aes(key);
+  var cipher = sjcl.cipher.aes(key);
   var IV = GetRandomValues(4);
   var m = chunk(plainText);
   var c = new Array(m.length);
@@ -73,9 +74,12 @@ function encrypt(plainText, key) {
     c[i] = cipher.encrypt(x);
   }
   c.push(IV);
-  var ciphertext = sjcl.codec.base64.fromBits(c);
-  //return c.join("");
-  return ciphertext;
+  var ciphertext = c[0];
+  for (var i = 1; i < c.length; i++) {
+    ciphertext = concat(ciphertext, c[i]);
+  }
+  debugger;
+  return sjcl.codec.base64.fromBits(ciphertext);
 }
 
 // Return the decryption of the message for the given group, in the form of a string.
@@ -89,41 +93,30 @@ function Decrypt(cipherText, group) {
 }
 
 function decrypt(cipherText, key) {
-  // CS255-todo: implement decryption on encrypted messages
-
-  // if (cipherText.indexOf('rot13:') == 0) {
-
-  //   // decrypt, ignore the tag.
-  //   var decryptedMsg = rot13(cipherText.slice(6));
-  //   return decryptedMsg;
-
-  // } else {
-  //   throw "not encrypted";
-  // }
+  debugger;
   var cipher = new sjcl.cipher.aes(key);
   var c = sjcl.codec.base64.toBits(cipherText); 
-  //var c = chunk(cipherText);
+  c = chunk(c);
   var IV = c.pop();
   var m = new Array(c.length);
   m[0] = block_xor(cipher.decrypt(c[0]), IV);
   for (var i = 1; i < m.length; i++) {
     m[i] = block_xor(cipher.decrypt(c[i]), c[i-1]);
   }
-  //var plainText = m.join("");
   var plainText = sjcl.codec.utf8String.fromBits(m);
   
   // un-pad plaintext
-  /*var pad = plainText.charCodeAt(plainText.length - 1);
+  var pad = plainText.charCodeAt(plainText.length - 1);
   plainText = plainText.substring(0, plainText.length - 1 - pad);
-  */
   
   return plainText;
 }
 
 function chunk(text) {
+  debugger;
   assert(sjcl.bitArray.bitLength(text) % 128 == 0, "Error: attempted to chunk an unchunkable text block"); // assume that text length is a multiple of 4
-  var t = new Array(text.length / 128);
-  for (var i = 0; i < text.length; i += 128) {
+  var t = new Array(sjcl.bitArray.bitLength(text) / 128);
+  for (var i = 0; i < sjcl.bitArray.bitLength(text); i += 128) {
     t[i / 128] = sjcl.bitArray.bitSlice(text, i, i+128);
   }
   return t;
