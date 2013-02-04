@@ -40,6 +40,10 @@ function Encrypt(plainText, group) {
   return encrypt(plainText, keys[group]);
 }
 
+function block_xor(x, y) {
+  return [x[0] ^ y[0], x[1] ^ y[1], x[2] ^ y[2], x[3] ^ y[3]];
+}
+
 function encrypt(plainText, key) {
   // CS255-todo: encrypt the plainText, using key for the group.
   // if ((plainText.indexOf('rot13:') == 0) || (plainText.length < 1)) {
@@ -52,18 +56,16 @@ function encrypt(plainText, key) {
   // }
 
   // pad plaintext
-  var pad = Math.floor(plainText.length / 4 + 1) * 4 - plainText.length;
+  var pad = Math.floor(plainText.length / 16 + 1) * 16 - plainText.length;
   for (var i = 0; i < pad; i++) {
-    plainText = plainText + pad;
+    plainText = plainText + String.fromCharCode(pad);
   }
 
   var cipher = new sjcl.cipher.aes(key);
   var IV = GetRandomValues(4);
-  // Need to implement chunk
   var m = chunk(plainText);
   var c = new Array(m.length);
-  var x = m[0] ^ IV;
-  debugger;
+  var x = block_xor(m[0], IV);
   c[0] = cipher.encrypt(x);
   for (var i = 1; i < m.length; i++) {
     x = m[i] ^ c[i-1];
@@ -117,7 +119,7 @@ function chunk(text) {
   assert(text.length % 4 == 0); // assume that text length is a multiple of 4
   var t = new Array(text.length / 4);
   for (var i = 0; i < text.length; i += 4) {
-    t[i] = text.substring(i, i+4)/*.split("")*/;
+    t[i] = text.substring(i, i+4).split("");
   }
   return t;
 }
