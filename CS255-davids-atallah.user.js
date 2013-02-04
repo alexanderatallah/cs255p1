@@ -68,7 +68,7 @@ function encrypt(plainText, key) {
   var x = block_xor(m[0], IV);
   c[0] = cipher.encrypt(x);
   for (var i = 1; i < m.length; i++) {
-    x = m[i] ^ c[i-1];
+    x = block_xor(m[i], c[i-1]);
     c[i] = cipher.encrypt(x);
   }
   c.push(IV);
@@ -98,18 +98,17 @@ function decrypt(cipherText, key) {
   //   throw "not encrypted";
   // }
   var cipher = new sjcl.cipher.aes(key);
-  // Need to implement chunk, possibly modify for decrypt
   var c = chunk(cipherText);
   var IV = c.pop();
   var m = new Array(c.length);
-  m[0] = cipher.decrypt(c[0]) ^ IV;
+  m[0] = block_xor(cipher.decrypt(c[0]), IV);
   for (var i = 1; i < m.length; i++) {
-    m[i] = cipher.decrypt(c[i]) ^ c[i-1];
+    m[i] = block_xor(cipher.decrypt(c[i]), c[i-1]);
   }
   var plainText = m.join("");
   
   // un-pad plaintext
-  var pad = parseInt(plainText.charAt(plainText.length - 1));
+  var pad = plainText.charCodeAt(plainText.length - 1));
   plainText = plainText.substring(0, plainText.length - 1 - pad);
   
   return plainText;
