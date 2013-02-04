@@ -51,12 +51,19 @@ function encrypt(plainText, key) {
   //   return 'rot13:' + rot13(plainText);
   // }
 
+  // pad plaintext
+  var pad = Math.floor(plainText.length / 4 + 1) * 4 - plainText.length;
+  for (var i = 0; i < pad; i++) {
+    plainText = plainText + pad;
+  }
+
   var cipher = new sjcl.cipher.aes(key);
-  var IV = GetRandomValues(2);
+  var IV = GetRandomValues(4);
   // Need to implement chunk
   var m = chunk(plainText);
   var c = new Array(m.length);
   var x = m[0] ^ IV;
+  debugger;
   c[0] = cipher.encrypt(x);
   for (var i = 1; i < m.length; i++) {
     x = m[i] ^ c[i-1];
@@ -97,13 +104,20 @@ function decrypt(cipherText, key) {
   for (var i = 1; i < m.length; i++) {
     m[i] = cipher.decrypt(c[i]) ^ c[i-1];
   }
-  return m.join("");
+  var plainText = m.join("");
+  
+  // un-pad plaintext
+  var pad = parseInt(plainText.charAt(plainText.length - 1));
+  plainText = plainText.substring(0, plainText.length - 1 - pad);
+  
+  return plainText;
 }
 
 function chunk(text) {
-  var t = new Array(text.length / 4 + 1);
+  assert(text.length % 4 == 0); // assume that text length is a multiple of 4
+  var t = new Array(text.length / 4);
   for (var i = 0; i < text.length; i += 4) {
-    t[i] = text.substring(i, i+4).split("");
+    t[i] = text.substring(i, i+4)/*.split("")*/;
   }
   return t;
 }
