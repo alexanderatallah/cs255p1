@@ -164,12 +164,17 @@ function LoadKeys() {
 
     while (!userkey) {
       var password = prompt("Enter your password:");
-      assert(password);
+      assert(password, "No password entered.");
       var salt = JSON.parse(cs255.localStorage.getItem('fb-salt-' + my_username));
-      assert(salt);
+      assert(salt, "Tampered database detected");
       userkey = sjcl.misc.pbkdf2(password, salt, null, 128, null);
       // Make sure it successfully decrypts
-      key_str = decrypt(saved, userkey);
+      try {
+        key_str = decrypt(saved, userkey);
+      } catch (e) {
+        userkey = null;
+        continue;
+      }
       if (key_str.substr(0, 2) != "{\"" && key_str != "{}") {
         userkey = null;
       } else { // success
