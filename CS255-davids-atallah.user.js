@@ -38,7 +38,8 @@ var keys = {}; // association map of keys: group -> key
 // @return {String} Encryption of the plaintext, encoded as a string.
 function Encrypt(plainText, group) {
   assert(keys[group], "You need to create a key for this group in Settings.");
-  return encrypt(plainText, keys[group]);
+  var key = sjcl.codec.base64.toBits(keys[group]);
+  return encrypt(plainText, key);
 }
 
 function block_xor(x, y) {
@@ -88,7 +89,8 @@ function encrypt(plainText, key) {
 // @param {String} group Group name.
 // @return {String} Decryption of the ciphertext.
 function Decrypt(cipherText, group) {
-  return decrypt(cipherText, keys[group]);
+  var key = sjcl.codec.base64.toBits(keys[group]);
+  return decrypt(cipherText, key);
 }
 
 function decrypt(cipherText, key) {
@@ -134,7 +136,7 @@ function GenerateKey(group) {
   
   var key = GetRandomValues(4); // assuming that key length is 128 bits
 
-  keys[group] = key;
+  keys[group] = sjcl.codec.base64.fromBits(key);
   SaveKeys();
 }
 
