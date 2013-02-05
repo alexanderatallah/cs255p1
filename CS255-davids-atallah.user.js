@@ -37,9 +37,14 @@ var keys = {}; // association map of keys: group -> key
 // @param {String} group Group name.
 // @return {String} Encryption of the plaintext, encoded as a string.
 function Encrypt(plainText, group) {
+  if ((plainText.indexOf('aes:') == 0) || (plainText.length < 1)) {
+    // already done, or blank
+    alert("Try entering a message (the button works only once)");
+    return plainText;
+  }
   assert(keys[group], "You need to create a key for this group in Settings.");
   var key = sjcl.codec.base64.toBits(keys[group]);
-  return encrypt(plainText, key);
+  return "aes:" + encrypt(plainText, key);
 }
 
 function block_xor(x, y) {
@@ -47,16 +52,6 @@ function block_xor(x, y) {
 }
 
 function encrypt(plainText, key) {
-  // CS255-todo: encrypt the plainText, using key for the group.
-  // if ((plainText.indexOf('rot13:') == 0) || (plainText.length < 1)) {
-  //   // already done, or blank
-  //   alert("Try entering a message (the button works only once)");
-  //   return plainText;
-  // } else {
-  //   // encrypt, add tag.
-  //   return 'rot13:' + rot13(plainText);
-  // }
-
   // pad plaintext
   var pad = Math.floor(plainText.length / 16 + 1) * 16 - plainText.length;
   for (var i = 0; i < pad; i++) {
@@ -89,8 +84,10 @@ function encrypt(plainText, key) {
 // @param {String} group Group name.
 // @return {String} Decryption of the ciphertext.
 function Decrypt(cipherText, group) {
+  assert(keys[group], "You need to obtain the key for this group and add it in Settings.");
   var key = sjcl.codec.base64.toBits(keys[group]);
-  return decrypt(cipherText, key);
+  if(cipherText.substring(0,4) != "aes:") throw "Not encrypted";
+  return decrypt(cipherText.substring(4), key);
 }
 
 function decrypt(cipherText, key) {
