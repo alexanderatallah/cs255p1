@@ -54,17 +54,17 @@ function encrypt(plainText, key) {
   //   // encrypt, add tag.
   //   return 'rot13:' + rot13(plainText);
   // }
-  
-  plainText = sjcl.codec.utf8String.toBits(plainText);
+
   // pad plaintext
   var pad = Math.floor(plainText.length / 16 + 1) * 16 - plainText.length;
-  pad = sjcl.codec.utf8String.toBits(pad + "");
   for (var i = 0; i < pad; i++) {
-    plainText = plainText.concat(pad);
+    plainText = plainText + String.fromCharCode(pad);
   }
-  var cipher = sjcl.cipher.aes(key);
+  
+  var plainTextBits = sjcl.codec.utf8String.toBits(plainText);
+  var cipher = new sjcl.cipher.aes(key);
   var IV = GetRandomValues(4);
-  var m = chunk(plainText);
+  var m = chunk(plainTextBits);
   var c = new Array(m.length);
   var x = block_xor(m[0], IV);
   c[0] = cipher.encrypt(x);
@@ -75,7 +75,7 @@ function encrypt(plainText, key) {
   c.push(IV);
   var ciphertext = c[0];
   for (var i = 1; i < c.length; i++) {
-    ciphertext = concat(ciphertext, c[i]);
+    ciphertext = ciphertext.concat(c[i]);
   }
   debugger;
   return sjcl.codec.base64.fromBits(ciphertext);
@@ -102,12 +102,12 @@ function decrypt(cipherText, key) {
   for (var i = 1; i < m.length; i++) {
     m[i] = block_xor(cipher.decrypt(c[i]), c[i-1]);
   }
+  var plainText = sjcl.codec.utf8String.fromBits(m);
   
   // un-pad plaintext
-  var pad = m[m.length - 1];
-  m = m.slice(0, m.length - 1 - pad);
-
-  var plainText = sjcl.codec.utf8String.fromBits(m);
+  var pad = plainText.charCodeAt(plainText.length - 1);
+  plainText = plainText.substring(0, plainText.length - 1 - pad);
+  
   return plainText;
 }
 
