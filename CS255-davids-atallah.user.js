@@ -37,6 +37,7 @@ var keys = {}; // association map of keys: group -> key
 // @param {String} group Group name.
 // @return {String} Encryption of the plaintext, encoded as a string.
 function Encrypt(plainText, group) {
+  assert(keys[group], "You need to create a key for this group in Settings.");
   return encrypt(plainText, keys[group]);
 }
 
@@ -77,7 +78,6 @@ function encrypt(plainText, key) {
   for (var i = 1; i < c.length; i++) {
     ciphertext = ciphertext.concat(c[i]);
   }
-  debugger;
   return sjcl.codec.base64.fromBits(ciphertext);
 }
 
@@ -92,30 +92,34 @@ function Decrypt(cipherText, group) {
 }
 
 function decrypt(cipherText, key) {
-  debugger;
   var cipher = new sjcl.cipher.aes(key);
-  var c = sjcl.codec.base64.toBits(cipherText); 
+  var c = sjcl.codec.base64.toBits(cipherText);
   c = chunk(c);
   var IV = c.pop();
   var m = new Array(c.length);
   m[0] = block_xor(cipher.decrypt(c[0]), IV);
+
   for (var i = 1; i < m.length; i++) {
     m[i] = block_xor(cipher.decrypt(c[i]), c[i-1]);
   }
-  var plainText = sjcl.codec.utf8String.fromBits(m);
+  var pt = m[0];
+  for (var i = 1; i < m.length; i++) {
+    pt = pt.concat(m[i]);
+  }
+  var plainText = sjcl.codec.utf8String.fromBits(pt);
   
   // un-pad plaintext
   var pad = plainText.charCodeAt(plainText.length - 1);
-  plainText = plainText.substring(0, plainText.length - 1 - pad);
+  plainText = plainText.substring(0, plainText.length - pad);
   
   return plainText;
 }
 
 function chunk(text) {
-  debugger;
-  assert(sjcl.bitArray.bitLength(text) % 128 == 0, "Error: attempted to chunk an unchunkable text block"); // assume that text length is a multiple of 4
-  var t = new Array(sjcl.bitArray.bitLength(text) / 128);
-  for (var i = 0; i < sjcl.bitArray.bitLength(text); i += 128) {
+  var bitLen = sjcl.bitArray.bitLength(text);
+  assert(bitLen % 128 == 0, "Error: attempted to chunk an unchunkable text block"); // assume that text length is a multiple of 4
+  var t = new Array(bitLen / 128);
+  for (var i = 0; i < bitLen; i += 128) {
     t[i / 128] = sjcl.bitArray.bitSlice(text, i, i+128);
   }
   return t;
