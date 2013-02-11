@@ -62,6 +62,10 @@ function encrypt(plainText, key) {
   var cipher = new sjcl.cipher.aes(key);
   var IV = GetRandomValues(4);
   var m = chunk(plainTextBits);
+
+  var tag = stamp(key, m);
+  m.push(tag);
+
   var c = new Array(m.length);
   var x = block_xor(m[0], IV);
   c[0] = cipher.encrypt(x);
@@ -101,6 +105,11 @@ function decrypt(cipherText, key) {
   for (var i = 1; i < m.length; i++) {
     m[i] = block_xor(cipher.decrypt(c[i]), c[i-1]);
   }
+
+  var tag = m.pop();
+
+  assert(verify(key, m, tag) == true, "Message integrity compromised");
+
   var pt = m[0];
   for (var i = 1; i < m.length; i++) {
     pt = pt.concat(m[i]);
@@ -122,6 +131,21 @@ function chunk(text) {
     t[i / 128] = sjcl.bitArray.bitSlice(text, i, i+128);
   }
   return t;
+}
+
+function stamp(k, m) {
+  var k1 = encrypt("0", k);
+  var cipher = new sjcl.cipher.aes(k);
+  var t = cipher.encrypt(m[0]);
+  for (var i = 1; i < m.length; i++) {
+    t = cipher.encrypt(block_xor(m[i], t);
+  }
+  var cipher1 = new sjcl.cipher.aes(k1);
+  return cipher1.encrypt(t);
+}
+
+function verify(k, m, t) {
+  return stamp(k, m) == t;
 }
 
 // Generate a new key for the given group.
