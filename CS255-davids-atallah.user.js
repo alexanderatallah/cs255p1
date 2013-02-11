@@ -108,7 +108,7 @@ function decrypt(cipherText, key) {
 
   var tag = m.pop();
 
-  assert(verify(key, m, tag) == true, "Message integrity compromised");
+  assert(verify(key, m, tag), "Message integrity compromised");
 
   var pt = m[0];
   for (var i = 1; i < m.length; i++) {
@@ -134,18 +134,18 @@ function chunk(text) {
 }
 
 function stamp(k, m) {
-  var k1 = encrypt("0", k);
   var cipher = new sjcl.cipher.aes(k);
+  var k1 = cipher.encrypt(sjcl.codec.utf8String.toBits("0000000000000000"));
   var t = cipher.encrypt(m[0]);
   for (var i = 1; i < m.length; i++) {
-    t = cipher.encrypt(block_xor(m[i], t);
+    t = cipher.encrypt(block_xor(m[i], t));
   }
   var cipher1 = new sjcl.cipher.aes(k1);
   return cipher1.encrypt(t);
 }
 
 function verify(k, m, t) {
-  return stamp(k, m) == t;
+  return stamp(k, m).join("") == t.join("");
 }
 
 // Generate a new key for the given group.
