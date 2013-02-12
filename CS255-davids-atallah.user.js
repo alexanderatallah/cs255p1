@@ -183,8 +183,10 @@ function LoadKeys() {
     var key_str = null;
     if (userkey) key_str = decrypt(saved, userkey);
 
+    var prompt_string = "Please enter your password.";
     while (!userkey) {
-      var password = prompt("Enter your password:");
+      var password = prompt(prompt_string);
+      prompt_string = "Password incorrect. Please try again:";
       assert(password, "No password entered.");
       var salt = JSON.parse(cs255.localStorage.getItem('fb-salt-' + my_username));
       assert(salt, "Tampered database detected");
