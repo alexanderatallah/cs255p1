@@ -53,13 +53,15 @@ function block_xor(x, y) {
 
 function encrypt(plainText, key) {
   // pad plaintext
+  var key_cipher = new sjcl.cipher.aes(key);
+  var k1 = key_cipher.encrypt(sjcl.codec.utf8String.toBits("String 0"));
   var pad = Math.floor(plainText.length / 16 + 1) * 16 - plainText.length;
   for (var i = 0; i < pad; i++) {
     plainText = plainText + String.fromCharCode(pad);
   }
   
   var plainTextBits = sjcl.codec.utf8String.toBits(plainText);
-  var cipher = new sjcl.cipher.aes(key);
+  var cipher = new sjcl.cipher.aes(k1);
   var IV = GetRandomValues(4);
   var m = chunk(plainTextBits);
 
@@ -95,7 +97,9 @@ function Decrypt(cipherText, group) {
 }
 
 function decrypt(cipherText, key) {
-  var cipher = new sjcl.cipher.aes(key);
+  var key_cipher = new sjcl.cipher.aes(key);
+  var k1 = key_cipher.encrypt(sjcl.codec.utf8String.toBits("String 0"));
+  var cipher = new sjcl.cipher.aes(k1);
   var c = sjcl.codec.base64.toBits(cipherText);
   c = chunk(c);
   var IV = c.pop();
@@ -133,9 +137,11 @@ function chunk(text) {
   return t;
 }
 
-function stamp(k, m) {
+function stamp(key, m) {
+  var key_cipher = new sjcl.cipher.aes(key);
+  var k = key_cipher.encrypt(sjcl.codec.utf8String.toBits("String 1"));
   var cipher = new sjcl.cipher.aes(k);
-  var k1 = cipher.encrypt(sjcl.codec.utf8String.toBits("0000000000000000"));
+  var k1 = key_cipher.encrypt(sjcl.codec.utf8String.toBits("String 2"));
   var t = cipher.encrypt(m[0]);
   for (var i = 1; i < m.length; i++) {
     t = cipher.encrypt(block_xor(m[i], t));

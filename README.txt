@@ -14,6 +14,8 @@ To store the keys, we kept an encrypted stringified JSON of the keys for the use
 
 If an attacker were able to break one part of our cryptography scheme, he/she would possibly compromise aspects we assume to be secure. For example, if an attacker brute-forced anyone's database password, everything else is pointless, since the keys for their groups are exposed.
 
+For our MAC system, we implemented a CBC-MAC, encrypting with a derived key on the last step.
+
 Discussion questions:
 
 1. Browser cryptography suffers from several issues. Since all of the SJCL code isn't compiled or signed, an attacker can inspect the code easily and find ways to attack it. But more importantly, JavaScript is easy to inject into a page: if an attacker took control of a user's browser, he/she could inject a <script> tag that intercepts "Encrypt" button presses and takes the message before the user actually encrypts it.
