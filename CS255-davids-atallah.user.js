@@ -150,8 +150,17 @@ function stamp(key, m) {
   return cipher1.encrypt(t);
 }
 
+function pad_zeros(s) {
+  var pad = Math.floor(s.length / 16 + 1) * 16 - s.length;
+  for (var i = 0; i < pad; i++) {
+    s = s + '0';
+  }
+  return s;
+}
+
 function verify(k, m, t) {
-  return stamp(k, stamp(k, m).join("")).join("") == stamp(k, t.join("")).join("");
+  debugger;
+  return stamp(k, chunk(sjcl.codec.utf8String.toBits(pad_zeros(stamp(k, m).join(""))))).join("") == stamp(k, chunk(sjcl.codec.utf8String.toBits(pad_zeros(t.join(""))))).join("");
 }
 
 // Generate a new key for the given group.
