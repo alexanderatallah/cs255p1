@@ -16,6 +16,8 @@ If an attacker were able to break one part of our cryptography scheme, he/she wo
 
 For our MAC system, we implemented a CBC-MAC. In order to use this MAC (along with our AES), we needed three pseudorandom keys -- the key for AES, the main key for MAC, and the key for the last step of MAC. To generate these three keys from the master key, we simply found the encryptions of three fixed strings with the master key, and used those encryptions as our keys. This is secure because the output of AES is assumed to be pseudorandom. We also use this MAC to authenticate our key database, ensuring that no malicious entities have tried to modify this database (or that no process has accidentally corrupted it). Finally, to eliminate the possibility of a timing attack, our "verify" function compares the stamped MAC with the stamped test instead of just comparing the MAC with the test string.
 
+This MAC is guaranteed to provide authenticated encryption because even though we do MAC-then-encrypt, we use a rand-CBC cipher for encryption and decryption, which guarantees authenticated encryption.
+
 Discussion questions:
 
 1. Browser cryptography suffers from several issues. Since all of the SJCL code isn't compiled or signed, an attacker can inspect the code easily and find ways to attack it. But more importantly, JavaScript is easy to inject into a page: if an attacker took control of a user's browser, he/she could inject a <script> tag that intercepts "Encrypt" button presses and takes the message before the user actually encrypts it.
