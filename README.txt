@@ -14,7 +14,7 @@ To store the keys, we kept an encrypted stringified JSON of the keys for the use
 
 If an attacker were able to break one part of our cryptography scheme, he/she would possibly compromise aspects we assume to be secure. For example, if an attacker brute-forced anyone's database password, everything else is pointless, since the keys for their groups are exposed.
 
-For our MAC system, we implemented a CBC-MAC, encrypting with a derived key on the last step.
+For our MAC system, we implemented a CBC-MAC. In order to use this MAC (along with our AES), we needed three pseudorandom keys -- the key for AES, the main key for MAC, and the key for the last step of MAC. To generate these three keys from the master key, we simply found the encryptions of three fixed strings with the master key, and used those encryptions as our keys. This is secure because the output of AES is assumed to be pseudorandom. We also use this MAC to authenticate our key database, ensuring that no malicious entities have tried to modify this database (or that no process has accidentally corrupted it). Finally, to eliminate the possibility of a timing attack, our "verify" function compares the stamped MAC with the stamped test instead of just comparing the MAC with the test string.
 
 Discussion questions:
 

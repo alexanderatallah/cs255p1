@@ -151,7 +151,7 @@ function stamp(key, m) {
 }
 
 function verify(k, m, t) {
-  return stamp(k, m).join("") == t.join("");
+  return stamp(k, stamp(k, m).join("")).join("") == stamp(k, t.join("")).join("");
 }
 
 // Generate a new key for the given group.
