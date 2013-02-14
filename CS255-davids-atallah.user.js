@@ -159,8 +159,9 @@ function pad_zeros(s) {
 }
 
 function verify(k, m, t) {
-  debugger;
-  return stamp(k, chunk(sjcl.codec.utf8String.toBits(pad_zeros(stamp(k, m).join(""))))).join("") == stamp(k, chunk(sjcl.codec.utf8String.toBits(pad_zeros(t.join(""))))).join("");
+  var t_padded = chunk(sjcl.codec.utf8String.toBits(pad_zeros(t.join(""))));
+  var mk_padded = chunk(sjcl.codec.utf8String.toBits(pad_zeros(stamp(k, m).join(""))));
+  return stamp(k, mk_padded).join("") == stamp(k, t_padded).join("");
 }
 
 // Generate a new key for the given group.
